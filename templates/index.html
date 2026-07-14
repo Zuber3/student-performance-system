@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-text">
+    <h1>Smart Student Performance<br><span class="accent">Analysis System</span></h1>
+    <p class="hero-sub">
+    A smart <strong>DBMS + Artificial Intelligence</strong> based system specially designed
+    for <strong>Guardian Faculty Members (GFM), Subject Teachers, and Students</strong>
+    to efficiently monitor and improve academic performance. The system stores student
+    records, attendance, marks, and academic progress using <strong>SQLite Database</strong>,
+    while an intelligent prediction engine analyzes performance to identify students who
+    may need academic support. It helps GFMs and teachers make better decisions, track
+    progress easily, and guide students toward improved academic success 
+</p>
+    <div class="hero-buttons">
+      <a href="{{ url_for('dashboard') }}" class="btn btn-primary">View Dashboard</a>
+      <a href="{{ url_for('predict') }}" class="btn btn-outline">AI Predictor</a>
+    </div>
+  </div>
+  <div class="hero-cards">
+    <div class="feat-card">
+      <div class="feat-icon">🗄️</div>
+      <h3>Relational Database</h3>
+      <p>Normalised SQLite schema with 6 tables — Students,
+         Performance, Subjects, Departments, AI Predictions, Risk Flags.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">🤖</div>
+      <h3>AI Grade Prediction</h3>
+      <p>Weighted feature scoring (Percentage 38%, Attendance 28%, Assignments 20%, Study Hours 14%) predicts final grade with confidence score.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">⚠️</div>
+      <h3>Early Warning System</h3>
+      <p>Automatic risk flagging for students with low attendance, declining Percentage, or poor assignment rates.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">📊</div>
+      <h3>Live Analytics</h3>
+      <p>Charts for grade distribution, subject-wise performance, and cohort trends powered by Chart.js.</p>
+    </div>
+  </div>
+</section>
+
+<section class="tech-stack">
+  <h2>Technology Stack</h2>
+  <div class="stack-grid">
+    <div class="stack-item"><span class="stack-badge backend">Backend</span><strong>Python 3 + Flask</strong><br>Web framework &amp; routing</div>
+    <div class="stack-item"><span class="stack-badge db">Database</span><strong>SQLite3</strong><br>Relational DBMS</div>
+    <div class="stack-item"><span class="stack-badge ai">AI / ML</span><strong>Scoring Engine</strong><br>Feature-weighted predictor</div>
+    <div class="stack-item"><span class="stack-badge frontend">Frontend</span><strong>HTML + CSS + JS</strong><br>Jinja2 templates</div>
+    <div class="stack-item"><span class="stack-badge frontend">Charts</span><strong>Chart.js 4</strong><br>Data visualisation</div>
+    <div class="stack-item"><span class="stack-badge db">ORM</span><strong>sqlite3 (built-in)</strong><br>No external ORM needed</div>
+  </div>
+</section>
+{% endblock %}

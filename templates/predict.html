@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}AI Predictor{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>🤖 AI Grade Predictor</h2>
+  <p>Enter student parameters to predict final grade using weighted feature scoring</p>
+</div>
+
+<div class="predict-layout">
+  <div class="predict-form-card">
+    <h3>Input Features</h3>
+    <form method="POST" action="{{ url_for('predict') }}">
+      <div class="form-group">
+        <label for="prev_gpa">Percentage <span class="weight-badge">Weight 38%</span></label>
+        <input type="number"name="percentage" min="0" max="100" step="0.1"
+               value="{{ request.form.get('prev_gpa', '80') }}" required>
+
+        <span class="hint">0 – 100%</span>
+      </div>
+      <div class="form-group">
+        <label for="attendance">Attendance Rate % <span class="weight-badge">Weight 28%</span></label>
+        <input type="number" id="attendance" name="attendance" min="0" max="100" step="0.1"
+               value="{{ request.form.get('attendance', '80') }}" required>
+        <span class="hint">0 – 100%</span>
+      </div>
+      <div class="form-group">
+        <label for="assignment_rate">Assignment Completion % <span class="weight-badge">Weight 20%</span></label>
+        <input type="number" id="assignment_rate" name="assignment_rate" min="0" max="100" step="0.1"
+               value="{{ request.form.get('assignment_rate', '80') }}" required>
+        <span class="hint">0 – 100%</span>
+      </div>
+      <div class="form-group">
+        <label for="study_hours">Weekly Study Hours <span class="weight-badge">Weight 14%</span></label>
+        <input type="number" id="study_hours" name="study_hours" min="0" max="50" step="0.5"
+               value="{{ request.form.get('study_hours', '12') }}" required>
+        <span class="hint">Hours per week</span>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:0.5rem">
+        Run AI Prediction →
+      </button>
+    </form>
+
+    <div class="algo-box">
+      <h4>Model Algorithm</h4>
+      <code>score = Percentage×0.38 + Att×0.28 + Asgn×0.20 + Hrs×0.14</code>
+      <p>Weighted feature scoring modelling a Random Forest ensemble. Swap <code>predict_grade()</code> in <code>models/predictor.py</code> with a trained sklearn model for production use.</p>
+    </div>
+  </div>
+
+  {% if result %}
+  <div class="result-card">
+    <h3>Prediction Result</h3>
+    <div class="grade-display">{{ result.grade }}</div>
+    <p class="grade-label">Predicted Final Grade</p>
+
+    <div class="result-stats">
+      <div class="r-stat">
+        <div class="r-num">{{ result.confidence }}%</div>
+        <div class="r-lbl">Confidence</div>
+      </div>
+      <div class="r-stat">
+        <div class="r-num">{{ result.pass_probability }}%</div>
+        <div class="r-lbl">Pass Probability</div>
+      </div>
+      <div class="r-stat">
+        <div class="r-num">
+          <span class="badge {% if result.risk_level == 'none' %}badge-green{% elif result.risk_level == 'low' %}badge-blue{% elif result.risk_level == 'medium' %}badge-amber{% else %}badge-red{% endif %}">
+            {{ result.risk_level | capitalize }}
+          </span>
+        </div>
+        <div class="r-lbl">Risk Level</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap" style="margin:1rem 0">
+      <div class="progress-bar" style="width:{{ result.pass_probability }}%;height:14px;background:{% if result.pass_probability >= 75 %}#1D9E75{% elif result.pass_probability >= 50 %}#BA7517{% else %}#A32D2D{% endif %}"></div>
+    </div>
+
+    <div class="tips-box">
+      <h4>💡 Recommendations</h4>
+      <ul>
+      {% for tip in result.tips %}
+        <li>{{ tip }}</li>
+      {% endfor %}
+      </ul>
+    </div>
+
+    <p class="weak-factor">Weakest factor: <strong>{{ result.main_factor }}</strong></p>
+  </div>
+  {% else %}
+  <div class="result-placeholder">
+    <div style="font-size:4rem;margin-bottom:1rem">🤖</div>
+    <h3>Enter parameters and run prediction</h3>
+    <p>The AI model will analyse the four input features and predict the student's final grade with a confidence score and personalised tips.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

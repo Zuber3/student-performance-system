@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+  <a href="{{ url_for('students') }}" class="back-link">← Back to Students</a>
+  <h2>{{ student.name }}</h2>
+  <p>{{ student.roll_no }} &nbsp;·&nbsp; {{ student.dept_name }} &nbsp;·&nbsp; Semester {{ student.semester }}</p>
+</div>
+
+<div class="detail-grid">
+  <div>
+    <!-- Student Info Card -->
+    <div class="info-card">
+      <h3>Student Information</h3>
+      <table class="info-table">
+        <tr><td>Email</td><td>{{ student.email or '—' }}</td></tr>
+        <tr><td>Date of Birth</td><td>{{ student.dob or '—' }}</td></tr>
+        <tr><td>Department</td><td>{{ student.dept_name }}</td></tr>
+        <tr><td>Semester</td><td>{{ student.semester }}</td></tr>
+      </table>
+    </div>
+
+    <!-- AI Prediction Card -->
+    {% if prediction %}
+    <div class="info-card prediction-card">
+      <h3>🤖 AI Prediction</h3>
+      <div class="pred-grade">{{ prediction.predicted_grade }}</div>
+      <div class="pred-meta">Predicted Final Grade</div>
+      <div class="pred-stats">
+        <div><span class="pred-num">{{ prediction.confidence }}%</span><br>Confidence</div>
+        <div><span class="pred-num">{{ prediction.pass_probability }}%</span><br>Pass Probability</div>
+      </div>
+      <div class="progress-wrap" style="margin-top:8px">
+        <div class="progress-bar" style="width:{{ prediction.pass_probability }}%;background:{% if prediction.pass_probability >= 75 %}#1D9E75{% elif prediction.pass_probability >= 50 %}#BA7517{% else %}#A32D2D{% endif %}"></div>
+      </div>
+      <p class="pred-date">Last updated: {{ prediction.created_at[:10] }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Risk Flags -->
+    {% if risks %}
+    <div class="info-card risk-card">
+      <h3>⚠️ Active Risk Flags</h3>
+      {% for r in risks %}
+      <div class="risk-flag">
+        <span class="badge {% if r.risk_level == 'critical' %}badge-red{% elif r.risk_level == 'high' %}badge-red{% else %}badge-amber{% endif %}">
+          {{ r.risk_level | capitalize }}
+        </span>
+        <span class="risk-factor">{{ r.factor }}</span>
+        <span class="risk-date">{{ r.flagged_on }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div>
+    <!-- Performance Table -->
+    <div class="table-card">
+      <h3>Academic Performance</h3>
+      {% if performances %}
+      <table class="data-table">
+        <thead><tr><th>Subject</th><th>Marks</th><th>Attendance</th><th>Assignments</th><th>Study Hrs</th><th>Year/Sem</th></tr></thead>
+        <tbody>
+        {% for p in performances %}
+        <tr>
+          <td>{{ p.subject_name }}</td>
+          <td><span class="mark-pill {% if p.marks_obtained >= 70 %}good{% elif p.marks_obtained >= 40 %}ok{% else %}bad{% endif %}">{{ p.marks_obtained }}</span></td>
+          <td>{{ p.attendance_pct }}%</td>
+          <td>{{ p.assignment_rate }}%</td>
+          <td>{{ p.study_hours }}h/wk</td>
+          <td>{{ p.exam_year }} / Sem {{ p.semester }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+        <p class="text-muted" style="padding:1rem">No performance records yet. <a href="{{ url_for('add_performance') }}">Add marks →</a></p>
+      {% endif %}
+    </div>
+
+    <!-- Marks Chart -->
+    {% if performances %}
+    <div class="chart-card" style="margin-top:1rem">
+      <h3>Marks by Subject</h3>
+      <div style="position:relative;height:220px">
+        <canvas id="perfChart" aria-label="Student marks by subject"></canvas>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if performances %}
+<script>
+const perfLabels = {{ performances | map(attribute='subject_name') | list | tojson }};
+const perfMarks  = {{ performances | map(attribute='marks_obtained') | list | tojson }};
+new Chart(document.getElementById('perfChart'), {
+  type: 'radar',
+  data: {
+    labels: perfLabels,
+    datasets: [{
+      label: 'Marks', data: perfMarks,
+      backgroundColor: 'rgba(24,95,165,0.15)',
+      borderColor: '#185FA5', pointBackgroundColor: '#185FA5'
+    }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    scales: { r: { min: 0, max: 100, ticks: { stepSize: 20 } } },
+    plugins: { legend: { display: false } }
+  }
+});
+</script>
+{% endif %}
+{% endblock %}

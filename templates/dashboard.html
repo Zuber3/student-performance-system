@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h2>Analytics Dashboard</h2>
+  <p>Real-time performance overview — all data from SQLite database</p>
+</div>
+
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-icon">👥</div>
+    <div class="metric-val">{{ stats.total_students }}</div>
+    <div class="metric-label">Total Students</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-icon">📈</div>
+    <div class="metric-val">{{ stats.avg_gpa }}</div>
+    <div class="metric-label">Average GPA</div>
+  </div>
+  <div class="metric-card danger">
+    <div class="metric-icon">⚠️</div>
+    <div class="metric-val">{{ stats.at_risk }}</div>
+    <div class="metric-label">At-Risk Students</div>
+  </div>
+  <div class="metric-card success">
+    <div class="metric-icon">✅</div>
+    <div class="metric-val">{{ stats.pass_rate }}%</div>
+    <div class="metric-label">Pass Rate</div>
+  </div>
+  <div class="metric-card info">
+    <div class="metric-icon">🤖</div>
+    <div class="metric-val">{{ stats.ai_accuracy }}%</div>
+    <div class="metric-label">AI Accuracy</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-icon">🔮</div>
+    <div class="metric-val">{{ stats.predictions_run }}</div>
+    <div class="metric-label">Predictions Run</div>
+  </div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-card">
+    <h3>Grade Distribution (AI Predictions)</h3>
+    <div style="position:relative;height:280px">
+      <canvas id="gradeChart" aria-label="Grade distribution bar chart"></canvas>
+    </div>
+  </div>
+  <div class="chart-card">
+    <h3>Subject-wise Average Marks</h3>
+    <div style="position:relative;height:280px">
+      <canvas id="subjectChart" aria-label="Subject performance bar chart"></canvas>
+    </div>
+  </div>
+</div>
+
+<div class="chart-card" style="margin-top:1.5rem">
+  <h3>Subject Pass Rate vs Attendance</h3>
+  <div style="position:relative;height:260px">
+    <canvas id="passAttChart" aria-label="Pass rate vs attendance scatter chart"></canvas>
+  </div>
+</div>
+
+<div class="table-card" style="margin-top:1.5rem">
+  <h3>Subject Performance Table</h3>
+  <table class="data-table">
+    <thead><tr><th>Subject</th><th>Avg Marks</th><th>Avg Attendance</th><th>Pass Rate</th><th>Students</th></tr></thead>
+    <tbody>
+    {% for s in subjects %}
+    <tr>
+      <td>{{ s.subject_name }}</td>
+      <td><span class="mark-pill {% if s.avg_marks >= 70 %}good{% elif s.avg_marks >= 50 %}ok{% else %}bad{% endif %}">{{ s.avg_marks }}</span></td>
+      <td>{{ s.avg_attendance }}%</td>
+      <td>
+        <div class="progress-wrap">
+          <div class="progress-bar" style="width:{{ s.pass_rate }}%;background:{% if s.pass_rate>=75 %}#1D9E75{% elif s.pass_rate>=55 %}#BA7517{% else %}#A32D2D{% endif %}"></div>
+        </div>
+        {{ s.pass_rate }}%
+      </td>
+      <td>{{ s.student_count }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+const gradeLabels = {{ grades | map(attribute='grade') | list | tojson }};
+const gradeCounts = {{ grades | map(attribute='count') | list | tojson }};
+const gradeColors = {'A':'#1D9E75','A-':'#185FA5','B+':'#533AB7','B':'#378ADD','C+':'#BA7517','C':'#D85A30','D':'#E24B4A','F':'#A32D2D'};
+
+new Chart(document.getElementById('gradeChart'), {
+  type: 'bar',
+  data: {
+    labels: gradeLabels,
+    datasets: [{ label: 'Students', data: gradeCounts,
+      backgroundColor: gradeLabels.map(g => gradeColors[g] || '#888'),
+      borderRadius: 5, borderSkipped: false }]
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { ticks: { stepSize: 1 } }, x: { grid: { display: false } } } }
+});
+
+const subjLabels = {{ subjects | map(attribute='subject_name') | list | tojson }};
+const subjMarks  = {{ subjects | map(attribute='avg_marks') | list | tojson }};
+new Chart(document.getElementById('subjectChart'), {
+  type: 'bar',
+  data: {
+    labels: subjLabels,
+    datasets: [{ label: 'Avg Marks', data: subjMarks,
+      backgroundColor: '#185FA5', borderRadius: 4, borderSkipped: false }]
+  },
+  options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { x: { min: 0, max: 100, ticks: { callback: v => v + '%' } }, y: { ticks: { font: { size: 11 } } } } }
+});
+
+const passRates = {{ subjects | map(attribute='pass_rate') | list | tojson }};
+const attRates  = {{ subjects | map(attribute='avg_attendance') | list | tojson }};
+new Chart(document.getElementById('passAttChart'), {
+  type: 'scatter',
+  data: {
+    datasets: subjLabels.map((name, i) => ({
+      label: name, data: [{ x: attRates[i], y: passRates[i] }],
+      backgroundColor: '#185FA5', pointRadius: 8
+    }))
+  },
+  options: { responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: Att ${ctx.parsed.x}%, Pass ${ctx.parsed.y}%` } } },
+    scales: {
+      x: { title: { display: true, text: 'Avg Attendance %' }, min: 40, max: 100 },
+      y: { title: { display: true, text: 'Pass Rate %' }, min: 30, max: 100 }
+    }
+  }
+});
+</script>
+{% endblock %}
